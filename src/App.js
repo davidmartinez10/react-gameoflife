@@ -56,7 +56,7 @@ function calculate(matr) {
 }
 
 function App() {
-  const { gosper_glider_gun } = presets(matrix);
+  const { gosper_glider_gun, diehard } = presets(matrix);
   const [grid, set_grid] = useState(gosper_glider_gun());
   const [active, toggle] = useState(false);
   const canvas_ref = React.createRef();
@@ -88,9 +88,12 @@ function App() {
       }
     }
     if (active) {
-      setTimeout(function () {
+      const timeout = setTimeout(function () {
         set_grid(calculate(grid));
-      }, 10);
+      }, 30);
+      return function () {
+        clearTimeout(timeout);
+      };
     }
   });
 
