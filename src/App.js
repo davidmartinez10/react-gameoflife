@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import presets from "./presets";
+import { presets, options } from "./presets";
 
 const spacing = 0.5;
 const size = 10;
@@ -56,10 +56,11 @@ function calculate(matr) {
 }
 
 function App() {
-  const { gosper_glider_gun, diehard } = presets(matrix);
-  const [grid, set_grid] = useState(gosper_glider_gun());
-  const [active, toggle] = useState(false);
-  const canvas_ref = React.createRef();
+  const [grid, set_grid] = useState(matrix);
+  const [is_running, toggle] = useState(false);
+  const [select, set_select] = useState();
+  const [refresh_rate, set_slider] = useState(75);
+  const canvas_ref = React.useRef();
 
   useEffect(function () {
     const canvas = canvas_ref.current;
@@ -87,37 +88,101 @@ function App() {
         );
       }
     }
-    if (active) {
+    if (is_running) {
       const timeout = setTimeout(function () {
         set_grid(calculate(grid));
-      }, 30);
+      }, refresh_rate);
       return function () {
         clearTimeout(timeout);
       };
     }
   });
 
+  const header_styles = {
+    height: 50,
+    fontSize: 15,
+    lineHeight: 0,
+    marginRight: 20
+  };
   return (
     <>
-      <button
-        onClick={function () {
-          toggle(!active);
-        }}
+      <div
         style={{
-          height: 50,
-          backgroundColor: (
-            active
-              ? "red"
-              : "lightgreen"
-          )
+          display: "flex",
+          flexDirection: "row",
+          backgroundColor: "gray"
         }}
       >
+        <button
+          onClick={function () {
+            toggle(!is_running);
+          }}
+          style={{
+            ...header_styles,
+            fontSize: 30,
+            outline: 0,
+            backgroundColor: (
+              is_running
+                ? "red"
+                : "lightgreen"
+            )
+          }}
+        >
+          {
+            is_running
+              ? "⏹️"
+              : "▶️"
+          }
+        </button>
+        <div
+          style={header_styles}
+        >
+          <p>
+            Speed:
+          </p>
+          <input
+            type="range"
+            min="10"
+            max="150"
+            step="1"
+            value={refresh_rate}
+            onChange={function (event) {
+              set_slider(event.target.value);
+            }}
+          />
+        </div>
         {
-          active
-            ? "Stop"
-            : "Play"
+          !is_running
+            ? (
+
+              <div
+                style={header_styles}
+              >
+                <p>
+                  Preset:
+                </p>
+                <select value={select} onChange={function (event) {
+                  set_select(event.target.value);
+                  set_grid(
+                    presets[event.target.value](
+                      Array(X).fill().map(function () {
+                        return Array(Y).fill(0);
+                      })
+                    )
+                  );
+                }}>
+                  {options.map(function (item, key) {
+                    const { title, value } = item;
+                    return (
+                      <option value={value} key={String(key)}>{title}</option>
+                    );
+                  })}
+                </select>
+              </div>
+            )
+            : undefined
         }
-      </button>
+      </div>
       <canvas
         ref={canvas_ref}
         height={window.innerHeight - 60}
